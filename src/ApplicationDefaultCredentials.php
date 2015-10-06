@@ -17,7 +17,6 @@
 
 namespace Google\Auth;
 
-use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\ClientInterface;
 
 /**

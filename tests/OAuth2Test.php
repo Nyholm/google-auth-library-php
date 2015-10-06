@@ -19,10 +19,10 @@ namespace Google\Auth\Tests;
 
 use Google\Auth\OAuth2;
 use GuzzleHttp\Client;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Subscriber\Mock;
-use GuzzleHttp\Url;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\Psr7\Uri;
 use JWT;
 
 class OAuth2AuthorizationUriTest extends \PHPUnit_Framework_TestCase
@@ -119,7 +119,7 @@ class OAuth2AuthorizationUriTest extends \PHPUnit_Framework_TestCase
   public function testCanBeUrlObject()
   {
     $config = array_merge($this->minimal, [
-        'authorizationUri' => Url::fromString('https://another/uri')
+        'authorizationUri' => Uri::fromString('https://another/uri')
     ]);
     $o = new OAuth2($config);
     $this->assertEquals('/uri', $o->buildFullAuthorizationUri()->getPath());
@@ -219,7 +219,7 @@ class OAuth2GrantTypeTest extends \PHPUnit_Framework_TestCase
   {
     $o = new OAuth2($this->minimal);
     $o->setGrantType('http://a/grant/url');
-    $this->assertInstanceOf('GuzzleHttp\Url', $o->getGrantType());
+    $this->assertInstanceOf('GuzzleHttp\Psr7\Uri', $o->getGrantType());
     $this->assertEquals('http://a/grant/url', strval($o->getGrantType()));
   }
 }
@@ -488,7 +488,7 @@ class OAuth2GenerateAccessTokenRequestTest extends \PHPUnit_Framework_TestCase
 
     // Generate the request and confirm that it's correct.
     $req = $o->generateCredentialsRequest();
-    $this->assertInstanceOf('GuzzleHttp\Message\RequestInterface', $req);
+    $this->assertInstanceOf('GuzzleHttp\Psr7\RequestInterface', $req);
     $this->assertEquals('POST', $req->getMethod());
     $fields = $req->getBody()->getFields();
     $this->assertEquals('authorization_code', $fields['grant_type']);
@@ -504,7 +504,7 @@ class OAuth2GenerateAccessTokenRequestTest extends \PHPUnit_Framework_TestCase
 
     // Generate the request and confirm that it's correct.
     $req = $o->generateCredentialsRequest();
-    $this->assertInstanceOf('GuzzleHttp\Message\RequestInterface', $req);
+    $this->assertInstanceOf('GuzzleHttp\Psr7\RequestInterface', $req);
     $this->assertEquals('POST', $req->getMethod());
     $fields = $req->getBody()->getFields();
     $this->assertEquals('password', $fields['grant_type']);
@@ -520,7 +520,7 @@ class OAuth2GenerateAccessTokenRequestTest extends \PHPUnit_Framework_TestCase
 
     // Generate the request and confirm that it's correct.
     $req = $o->generateCredentialsRequest();
-    $this->assertInstanceOf('GuzzleHttp\Message\RequestInterface', $req);
+    $this->assertInstanceOf('GuzzleHttp\Psr7\RequestInterface', $req);
     $this->assertEquals('POST', $req->getMethod());
     $fields = $req->getBody()->getFields();
     $this->assertEquals('refresh_token', $fields['grant_type']);
@@ -568,7 +568,7 @@ class OAuth2GenerateAccessTokenRequestTest extends \PHPUnit_Framework_TestCase
 
     // Generate the request and confirm that it's correct.
     $req = $o->generateCredentialsRequest();
-    $this->assertInstanceOf('GuzzleHttp\Message\RequestInterface', $req);
+    $this->assertInstanceOf('GuzzleHttp\Psr7\RequestInterface', $req);
     $this->assertEquals('POST', $req->getMethod());
     $fields = $req->getBody()->getFields();
     $this->assertEquals(OAuth2::JWT_URN, $fields['grant_type']);
@@ -584,7 +584,7 @@ class OAuth2GenerateAccessTokenRequestTest extends \PHPUnit_Framework_TestCase
 
     // Generate the request and confirm that it's correct.
     $req = $o->generateCredentialsRequest();
-    $this->assertInstanceOf('GuzzleHttp\Message\RequestInterface', $req);
+    $this->assertInstanceOf('GuzzleHttp\Psr7\RequestInterface', $req);
     $this->assertEquals('POST', $req->getMethod());
     $fields = $req->getBody()->getFields();
     $this->assertEquals('my_value', $fields['my_param']);
@@ -606,7 +606,7 @@ class OAuth2FetchAuthTokenTest extends \PHPUnit_Framework_TestCase
 
   private function mockPluginWithCode($code)
   {
-    $plugin = new Mock();
+    $plugin = new MockHandler();
     $plugin->addResponse(new Response($code));
     return $plugin;
   }
@@ -643,8 +643,8 @@ class OAuth2FetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $testConfig = $this->fetchAuthTokenMinimal;
     $notJson = '{"foo": , this is cannot be passed as json" "bar"}';
     $client = new Client();
-    $plugin = new Mock();
-    $plugin->addResponse(new Response(200, [], Stream::factory($notJson)));
+    $plugin = new MockHandler();
+    $plugin->addResponse(new Response(200, [], Psr7\stream_for($notJson)));
     $client->getEmitter()->attach($plugin);
     $o = new OAuth2($testConfig);
     $o->fetchAuthToken($client);
@@ -655,8 +655,8 @@ class OAuth2FetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $testConfig = $this->fetchAuthTokenMinimal;
     $json = '{"foo": "bar"}';
     $client = new Client();
-    $plugin = new Mock();
-    $plugin->addResponse(new Response(200, [], Stream::factory($json)));
+    $plugin = new MockHandler();
+    $plugin->addResponse(new Response(200, [], Psr7\stream_for($json)));
     $client->getEmitter()->attach($plugin);
     $o = new OAuth2($testConfig);
     $tokens = $o->fetchAuthToken($client);
@@ -668,11 +668,11 @@ class OAuth2FetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $testConfig = $this->fetchAuthTokenMinimal;
     $json = 'foo=bar&spice=nice';
     $client = new Client();
-    $plugin = new Mock();
+    $plugin = new MockHandler();
     $plugin->addResponse(new Response(
         200,
         ['Content-Type' => 'application/x-www-form-urlencoded'],
-        Stream::factory($json)));
+        Psr7\stream_for($json)));
     $client->getEmitter()->attach($plugin);
     $o = new OAuth2($testConfig);
     $tokens = $o->fetchAuthToken($client);
@@ -693,8 +693,8 @@ class OAuth2FetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     ];
     $json = json_encode($wanted_updates);
     $client = new Client();
-    $plugin = new Mock();
-    $plugin->addResponse(new Response(200, [], Stream::factory($json)));
+    $plugin = new MockHandler();
+    $plugin->addResponse(new Response(200, [], Psr7\stream_for($json)));
     $client->getEmitter()->attach($plugin);
     $o = new OAuth2($testConfig);
     $this->assertNull($o->getExpiresAt());

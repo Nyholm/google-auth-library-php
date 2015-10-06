@@ -21,9 +21,9 @@ use Google\Auth\ApplicationDefaultCredentials;
 use Google\Auth\GCECredentials;
 use Google\Auth\ServiceAccountCredentials;
 use GuzzleHttp\Client;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Subscriber\Mock;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Handler\MockHandler;
 
 class ADCGetTest extends \PHPUnit_Framework_TestCase
 {
@@ -77,7 +77,7 @@ class ADCGetTest extends \PHPUnit_Framework_TestCase
     putenv('HOME=' . __DIR__ . '/not_exist_fixtures');
     $client = new Client();
     // simulate not being GCE by return 500
-    $client->getEmitter()->attach(new Mock([new Response(500)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(500)]));
     ApplicationDefaultCredentials::getCredentials('a scope', $client);
   }
 
@@ -91,9 +91,9 @@ class ADCGetTest extends \PHPUnit_Framework_TestCase
         'token_type' => 'Bearer',
     ];
     $jsonTokens = json_encode($wantedTokens);
-    $plugin = new Mock([
+    $plugin = new MockHandler([
         new Response(200, [GCECredentials::FLAVOR_HEADER => 'Google']),
-        new Response(200, [], Stream::factory($jsonTokens)),
+        new Response(200, [], Psr7\stream_for($jsonTokens)),
     ]);
     $client->getEmitter()->attach($plugin);
     $this->assertNotNull(
@@ -150,7 +150,7 @@ class ADCGetFetcherTest extends \PHPUnit_Framework_TestCase
     putenv('HOME=' . __DIR__ . '/not_exist_fixtures');
     $client = new Client();
     // simulate not being GCE by return 500
-    $client->getEmitter()->attach(new Mock([new Response(500)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(500)]));
     ApplicationDefaultCredentials::getFetcher('a scope', $client);
   }
 
@@ -164,9 +164,9 @@ class ADCGetFetcherTest extends \PHPUnit_Framework_TestCase
         'token_type' => 'Bearer',
     ];
     $jsonTokens = json_encode($wantedTokens);
-    $plugin = new Mock([
+    $plugin = new MockHandler([
         new Response(200, [GCECredentials::FLAVOR_HEADER => 'Google']),
-        new Response(200, [], Stream::factory($jsonTokens)),
+        new Response(200, [], Psr7\stream_for($jsonTokens)),
     ]);
     $client->getEmitter()->attach($plugin);
     $this->assertNotNull(

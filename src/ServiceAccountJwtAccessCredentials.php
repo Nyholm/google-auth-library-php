@@ -19,7 +19,6 @@ namespace Google\Auth;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Client;
-use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 

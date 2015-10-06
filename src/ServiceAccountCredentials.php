@@ -19,7 +19,7 @@ namespace Google\Auth;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Client;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Psr7;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 
@@ -39,7 +39,7 @@ use GuzzleHttp\Exception\ServerException;
  *   use Google\Auth\ServiceAccountCredentials;
  *   use Google\Auth\AuthTokenFetcher;
  *
- *   $stream = Stream::factory(get_file_contents(<my_key_file>));
+ *   $stream = Psr7\stream_for(get_file_contents(<my_key_file>));
  *   $sa = new ServiceAccountCredentials(
  *       'https://www.googleapis.com/auth/taskqueue',
  *        $stream);
@@ -71,7 +71,7 @@ class ServiceAccountCredentials extends CredentialsLoader
                               $jsonKeyPath = null, $sub = null)
   {
     if (is_null($jsonKey)) {
-      $jsonKeyStream = Stream::factory(file_get_contents($jsonKeyPath));
+      $jsonKeyStream = Psr7\stream_for(file_get_contents($jsonKeyPath));
       $jsonKey = json_decode($jsonKeyStream->getContents(), true);
     }
     if (!array_key_exists('client_email', $jsonKey)) {

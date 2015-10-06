@@ -21,9 +21,9 @@ use Google\Auth\OAuth2;
 use Google\Auth\ApplicationDefaultCredentials;
 use Google\Auth\UserRefreshCredentials;
 use GuzzleHttp\Client;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Subscriber\Mock;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Handler\MockHandler;
 
 // Creates a standard JSON auth object for testing.
 function createURCTestJson()
@@ -187,7 +187,7 @@ class URCFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $testJson = createURCTestJson();
     $scope = ['scope/1', 'scope/2'];
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(400)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(400)]));
     $sa = new UserRefreshCredentials(
         $scope,
         $testJson
@@ -203,7 +203,7 @@ class URCFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $testJson = createURCTestJson();
     $scope = ['scope/1', 'scope/2'];
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(500)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(500)]));
     $sa = new UserRefreshCredentials(
         $scope,
         $testJson
@@ -217,8 +217,8 @@ class URCFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $testJsonText = json_encode($testJson);
     $scope = ['scope/1', 'scope/2'];
     $client = new Client();
-    $testResponse = new Response(200, [], Stream::factory($testJsonText));
-    $client->getEmitter()->attach(new Mock([$testResponse]));
+    $testResponse = new Response(200, [], Psr7\stream_for($testJsonText));
+    $client->getEmitter()->attach(new MockHandler([$testResponse]));
     $sa = new UserRefreshCredentials(
         $scope,
         $testJson

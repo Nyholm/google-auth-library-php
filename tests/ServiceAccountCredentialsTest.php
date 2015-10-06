@@ -23,9 +23,9 @@ use Google\Auth\CredentialsLoader;
 use Google\Auth\ServiceAccountCredentials;
 use Google\Auth\ServiceAccountJwtAccessCredentials;
 use GuzzleHttp\Client;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Subscriber\Mock;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Handler\MockHandler;
 
 // Creates a standard JSON auth object for testing.
 function createTestJson()
@@ -222,7 +222,7 @@ class SACFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $testJson = $this->createTestJson();
     $scope = ['scope/1', 'scope/2'];
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(400)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(400)]));
     $sa = new ServiceAccountCredentials(
         $scope,
         $testJson
@@ -238,7 +238,7 @@ class SACFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $testJson = $this->createTestJson();
     $scope = ['scope/1', 'scope/2'];
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(500)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(500)]));
     $sa = new ServiceAccountCredentials(
         $scope,
         $testJson
@@ -252,8 +252,8 @@ class SACFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $testJsonText = json_encode($testJson);
     $scope = ['scope/1', 'scope/2'];
     $client = new Client();
-    $testResponse = new Response(200, [], Stream::factory($testJsonText));
-    $client->getEmitter()->attach(new Mock([$testResponse]));
+    $testResponse = new Response(200, [], Psr7\stream_for($testJsonText));
+    $client->getEmitter()->attach(new MockHandler([$testResponse]));
     $sa = new ServiceAccountCredentials(
         $scope,
         $testJson
@@ -269,8 +269,8 @@ class SACFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     $client = new Client();
     $access_token = 'accessToken123';
     $responseText = json_encode(array('access_token' => $access_token));
-    $testResponse = new Response(200, [], Stream::factory($responseText));
-    $client->getEmitter()->attach(new Mock([$testResponse]));
+    $testResponse = new Response(200, [], Psr7\stream_for($responseText));
+    $client->getEmitter()->attach(new MockHandler([$testResponse]));
     $sa = new ServiceAccountCredentials(
         $scope,
         $testJson
@@ -350,7 +350,7 @@ class SACJwtAccessTest extends \PHPUnit_Framework_TestCase
     $this->assertNotNull($sa);
 
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(200)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(200)]));
     $result = $sa->fetchAuthToken($client); // authUri has not been set
     $this->assertNull($result);
   }
@@ -441,7 +441,7 @@ class SACJwtAccessComboTest extends \PHPUnit_Framework_TestCase
     // call should be made
     $scope = null;
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(500)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(500)]));
     $sa = new ServiceAccountCredentials(
         $scope,
         $testJson
@@ -473,7 +473,7 @@ class SACJwtAccessComboTest extends \PHPUnit_Framework_TestCase
     // call should be made
     $scope = null;
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(500)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(500)]));
     $sa = new ServiceAccountCredentials(
         $scope,
         $testJson

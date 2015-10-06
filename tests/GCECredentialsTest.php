@@ -19,37 +19,37 @@ namespace Google\Auth\Tests;
 
 use Google\Auth\GCECredentials;
 use GuzzleHttp\Client;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Subscriber\Mock;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Handler\MockHandler;
 
 class GCECredentialsOnGCETest extends \PHPUnit_Framework_TestCase
 {
   public function testIsFalseOnClientErrorStatus()
   {
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(400)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(400)]));
     $this->assertFalse(GCECredentials::onGCE($client));
   }
 
   public function testIsFalseOnServerErrorStatus()
   {
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(500)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(500)]));
     $this->assertFalse(GCECredentials::onGCE($client));
   }
 
   public function testIsFalseOnOkStatusWithoutExpectedHeader()
   {
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(200)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(200)]));
     $this->assertFalse(GCECredentials::onGCE($client));
   }
 
   public function testIsOkIfGoogleIsTheFlavor()
   {
     $client = new Client();
-    $plugin = new Mock([new Response(200, [GCECredentials::FLAVOR_HEADER => 'Google'])]);
+    $plugin = new MockHandler([new Response(200, [GCECredentials::FLAVOR_HEADER => 'Google'])]);
     $client->getEmitter()->attach($plugin);
     $this->assertTrue(GCECredentials::onGCE($client));
   }
@@ -69,7 +69,7 @@ class GCECredentialsFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
   public function testShouldBeEmptyIfNotOnGCE()
   {
     $client = new Client();
-    $client->getEmitter()->attach(new Mock([new Response(500)]));
+    $client->getEmitter()->attach(new MockHandler([new Response(500)]));
     $g = new GCECredentials();
     $this->assertEquals(array(), $g->fetchAuthToken($client));
   }
@@ -81,9 +81,9 @@ class GCECredentialsFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
   {
     $notJson = '{"foo": , this is cannot be passed as json" "bar"}';
     $client = new Client();
-    $plugin = new Mock([
+    $plugin = new MockHandler([
         new Response(200, [GCECredentials::FLAVOR_HEADER => 'Google']),
-        new Response(200, [], Stream::factory($notJson)),
+        new Response(200, [], Psr7\stream_for($notJson)),
     ]);
     $client->getEmitter()->attach($plugin);
     $g = new GCECredentials();
@@ -99,9 +99,9 @@ class GCECredentialsFetchAuthTokenTest extends \PHPUnit_Framework_TestCase
     ];
     $jsonTokens = json_encode($wantedTokens);
     $client = new Client();
-    $plugin = new Mock([
+    $plugin = new MockHandler([
         new Response(200, [GCECredentials::FLAVOR_HEADER => 'Google']),
-        new Response(200, [], Stream::factory($jsonTokens)),
+        new Response(200, [], Psr7\stream_for($jsonTokens)),
     ]);
     $client->getEmitter()->attach($plugin);
     $g = new GCECredentials();

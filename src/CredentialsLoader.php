@@ -19,7 +19,8 @@ namespace Google\Auth;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Client;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\Stream;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 
@@ -75,7 +76,7 @@ abstract class CredentialsLoader implements FetchAuthTokenInterface
       $cause = "file " . $path . " does not exist";
       throw new \DomainException(self::unableToReadEnv($cause));
     }
-    $keyStream = Stream::factory(file_get_contents($path));
+    $keyStream = Psr7\stream_for(file_get_contents($path));
     return static::makeCredentials($scope, $keyStream);
   }
 
@@ -105,7 +106,7 @@ abstract class CredentialsLoader implements FetchAuthTokenInterface
     if (!file_exists($path)) {
       return null;
     }
-    $keyStream = Stream::factory(file_get_contents($path));
+    $keyStream = Psr7\stream_for(file_get_contents($path));
     return static::makeCredentials($scope, $keyStream);
   }
 

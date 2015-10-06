@@ -17,7 +17,6 @@
 
 namespace Google\Auth;
 
-use GuzzleHttp\Collection;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Event\BeforeEvent;
@@ -67,10 +66,10 @@ class AuthTokenFetcher implements SubscriberInterface
     $this->client = $client;
     if (!is_null($cache)) {
       $this->cache = $cache;
-      $this->cacheConfig = Collection::fromConfig($cacheConfig, [
+      $this->cacheConfig = array_merge([
           'lifetime' => self::DEFAULT_CACHE_LIFETIME,
           'prefix'   => ''
-      ], []);
+      ], $cacheConfig);
     }
   }
 
