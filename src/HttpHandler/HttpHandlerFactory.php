@@ -21,27 +21,44 @@ use Google\Auth\HttpHandler\Guzzle5HttpHandler;
 use Google\Auth\HttpHandler\Guzzle6HttpHandler;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use Http\Client\HttpClient;
+use Http\Discovery\HttpClientDiscovery;
 
 class HttpHandlerFactory
 {
   /**
-   * Builds out a default http handler for the installed version of guzzle.
+   * Builds out a http handler. First check if any Httplug clients is installed and fallback on an installed version
+   * of Guzzle.
    *
-   * @return Guzzle5HttpHandler|Guzzle6HttpHandler
+   * @return HttpHandler
    * @throws \Exception
    */
-  public static function build(ClientInterface $client = null)
+  public static function build($client = null)
   {
-    $version = ClientInterface::VERSION;
-    $client = $client ?: new Client();
+    if ($client instanceof HttpClient) {
+      return new HttpPlugHandler($client);
+    }
 
+    if ($client === null) {
+      // Try to find a client with auto discovery
+      try {
+        $client = HttpClientDiscovery::find();
+
+        return new HttpPlugHandler($client);
+      } catch (\Exception $e) {
+        // if auto discovery fails, use Guzzle
+        $client = new Client();
+      }
+    }
+
+    $version = ClientInterface::VERSION;
     switch ($version[0]) {
       case '5':
           return new Guzzle5HttpHandler($client);
       case '6':
           return new Guzzle6HttpHandler($client);
       default:
-          throw new \Exception('Version not supported');
+          throw new \Exception(sprintf('Version %s of Guzzle is not supported.', $version));
     }
   }
 }

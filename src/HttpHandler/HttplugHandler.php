@@ -2,21 +2,21 @@
 
 namespace Google\Auth\HttpHandler;
 
-use GuzzleHttp\ClientInterface;
+use Http\Client\HttpClient;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-class Guzzle6HttpHandler implements HttpHandler
+class HttpPlugHandler implements HttpHandler
 {
   /**
-   * @var ClientInterface
+   * @var HttpClient
    */
   private $client;
 
   /**
-   * @param ClientInterface $client
+   * @param HttpClient $client
    */
-  public function __construct(ClientInterface $client)
+  public function __construct(HttpClient $client)
   {
     $this->client = $client;
   }
@@ -26,6 +26,6 @@ class Guzzle6HttpHandler implements HttpHandler
    */
   public function __invoke(RequestInterface $request, array $options = [])
   {
-    return $this->client->send($request, $options);
+    return $this->client->sendRequest($request);
   }
 }

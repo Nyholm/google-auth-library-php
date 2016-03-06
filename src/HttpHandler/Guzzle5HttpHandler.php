@@ -22,7 +22,7 @@ use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-class Guzzle5HttpHandler
+class Guzzle5HttpHandler implements HttpHandler
 {
   /**
    * @var ClientInterface
@@ -38,11 +38,7 @@ class Guzzle5HttpHandler
   }
 
   /**
-   * Accepts a PSR-7 Request and an array of options and returns a PSR-7 response.
-   *
-   * @param RequestInterface $request
-   * @param array $options
-   * @return ResponseInterface
+   * {@inheritdoc}
    */
   public function __invoke(RequestInterface $request, array $options = [])
   {
